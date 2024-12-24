@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 import argparse
+import time
 
 def process_showui_desktop(data_dir):
     """
@@ -18,52 +19,120 @@ def process_showui_desktop(data_dir):
     if not all(p.exists() for p in [images_dir, metadata_dir]):
         raise ValueError(f"Required directories not found in {data_dir}")
     
+    start_time = time.time()
+    print(f"Processing metadata files in {metadata_dir}")
+    
+    # Initialize counters
+    file_count = 0
+    success_count = 0
+    failed_files = []
+    total_elements = 0
+    invalid_elements = 0
+    
     # Process each metadata file
     for meta_file in metadata_dir.glob("*.json"):
-        with open(meta_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            
-        # Create formatted metadata
-        formatted_data = {
-            "img_url": meta_file.stem + ".png",  # Assuming images are PNG
-            "img_size": data.get("viewport_size", [1920, 1080]),  # Default size if not provided
-            "element": []
-        }
+        file_count += 1
+        print(f"Processing file {file_count}: {meta_file.name}")
         
-        # Process each UI element
-        for elem in data.get("elements", []):
-            # Get bounding box coordinates
-            bbox = elem.get("bbox", {"x": 0, "y": 0, "width": 0, "height": 0})
-            w, h = formatted_data["img_size"]
+        try:
+            with open(meta_file, 'r', encoding='utf-8') as f:
+                try:
+                    data = json.load(f)
+                except json.JSONDecodeError as e:
+                    print(f"Error: Invalid JSON in file {meta_file.name}: {e}")
+                    failed_files.append(f"{meta_file.name} (Invalid JSON)")
+                    continue
+        except Exception as e:
+            print(f"Error: Could not read file {meta_file.name}: {e}")
+            failed_files.append(f"{meta_file.name} (Read Error)")
+            continue
             
-            # Convert to normalized coordinates [x1/w, y1/h, x2/w, y2/h]
-            x1 = bbox["x"] / w
-            y1 = bbox["y"] / h
-            x2 = (bbox["x"] + bbox["width"]) / w
-            y2 = (bbox["y"] + bbox["height"]) / h
-            normalized_bbox = [x1, y1, x2, y2]
-            
-            # Calculate center point
-            point = [
-                (x1 + x2) / 2,
-                (y1 + y2) / 2
+        try:
+            # Handle both list and dictionary formats
+            viewport_size = data[0].get("viewport_size", [1920, 1080]) if isinstance(data, list) and len(data) > 0 else data.get("viewport_size", [1920, 1080])
+            validated_size = [
+                abs(viewport_size[0]) if len(viewport_size) > 0 else 1920,
+                abs(viewport_size[1]) if len(viewport_size) > 1 else 1080
             ]
             
-            element_data = {
-                "instruction": elem.get("text", ""),
-                "bbox": normalized_bbox,
-                "data_type": elem.get("tag_name", "text").lower(),  # Use HTML tag name as type
-                "point": point
+            # Create formatted metadata
+            formatted_data = {
+                "img_url": meta_file.stem + ".png",  # Assuming images are PNG
+                "img_size": validated_size,  # Use validated dimensions
+                "element": []
             }
             
-            formatted_data["element"].append(element_data)
-        
-        # Add element size
-        formatted_data["element_size"] = len(formatted_data["element"])
-        
-        # Update original metadata file
-        with open(meta_file, 'w', encoding='utf-8') as f:
-            json.dump(formatted_data, f, indent=2)
+            # Process each UI element
+            elements = data[0].get("elements", []) if isinstance(data, list) and len(data) > 0 else data.get("elements", [])
+            for elem in elements:
+                try:
+                    # Get bounding box coordinates with validation
+                    bbox = elem.get("bbox", {"x": 0, "y": 0, "width": 0, "height": 0})
+                    w, h = formatted_data["img_size"]
+                    
+                    # Avoid division by zero
+                    x1 = bbox.get("x", 0) / w if w != 0 else 0
+                    y1 = bbox.get("y", 0) / h if h != 0 else 0
+                    x2 = (bbox.get("x", 0) + bbox.get("width", 0)) / w if w != 0 else 0
+                    y2 = (bbox.get("y", 0) + bbox.get("height", 0)) / h if h != 0 else 0
+                    normalized_bbox = [x1, y1, x2, y2]
+                    
+                    # Calculate center point
+                    point = [
+                        (x1 + x2) / 2,
+                        (y1 + y2) / 2
+                    ]
+                    
+                    element_data = {
+                        "instruction": elem.get("text", ""),
+                        "bbox": normalized_bbox,
+                        "data_type": elem.get("tag_name", "text").lower(),  # Use HTML tag name as type
+                        "point": point
+                    }
+                    
+                    formatted_data["element"].append(element_data)
+                    total_elements += 1
+                except (KeyError, TypeError, ValueError) as e:
+                    print(f"Warning: Invalid element in file {meta_file.name}, element {len(formatted_data['element']) + 1}: {e}")
+                    invalid_elements += 1
+                    continue
+            
+            # Add element size
+            formatted_data["element_size"] = len(formatted_data["element"])
+            
+            # Update original metadata file
+            try:
+                with open(meta_file, 'w', encoding='utf-8') as f:
+                    json.dump(formatted_data, f, indent=2)
+                success_count += 1
+            except Exception as e:
+                print(f"Error: Could not write to file {meta_file.name}: {e}")
+                failed_files.append(f"{meta_file.name} (Write Error)")
+                continue
+                
+        except (IndexError, TypeError, ValueError) as e:
+            print(f"Error: Invalid viewport size in file {meta_file.name}: {e}")
+            failed_files.append(f"{meta_file.name} (Invalid Viewport Size)")
+            continue
+    
+    print(f"\nProcessing complete:")
+    print(f"- Total files found: {file_count}")
+    print(f"- Successfully processed: {success_count}")
+    print(f"- Failed to process: {len(failed_files)}")
+    if failed_files:
+        print("- Failed files:")
+        for file in failed_files:
+            print(f"  - {file}")
+    print(f"- Output directory: {metadata_dir}")
+    print(f"- Total elements processed: {total_elements}")
+    if invalid_elements > 0:
+        print(f"- Invalid elements encountered: {invalid_elements}")
+    
+    elapsed_time = time.time() - start_time
+    print(f"- Total processing time: {elapsed_time:.2f} seconds")
+    if success_count > 0:
+        avg_time = elapsed_time / success_count
+        print(f"- Average time per file: {avg_time:.2f} seconds")
 
 def main():
     parser = argparse.ArgumentParser(description='Process ShowUI-desktop dataset metadata')

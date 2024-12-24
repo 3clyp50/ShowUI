@@ -67,7 +67,7 @@ _CONFIG_FOR_DOC = "Qwen2VLConfig"
 
 
 @dataclass
-class ShowUICausalLMOutputWithPast(ModelOutput):
+class Qwen2VLCausalLMOutputWithPast(ModelOutput):
     """
     Base class for ShowUI causal language model (or autoregressive) outputs.
 
@@ -728,7 +728,7 @@ class Qwen2VLSdpaAttention(Qwen2VLAttention):
         if output_attentions:
             # TODO: Improve this warning with e.g. `model.config.attn_implementation = "manual"` once this is implemented.
             logger.warning_once(
-                "Qwen2VLModel is using Qwen2VLSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, "
+                "ShowUIModel is using Qwen2VLSdpaAttention, but `torch.nn.functional.scaled_dot_product_attention` does not support `output_attentions=True`. Falling back to the manual attention implementation, "
                 'but specifying the manual implementation will be required from Transformers version v5.0.0 onwards. This warning can be removed using the argument `attn_implementation="eager"` when loading the model.'
             )
             return super().forward(
@@ -1087,7 +1087,7 @@ SHOWUI_START_DOCSTRING = r"""
     "The bare sHOWui Model outputting raw hidden-states without any specific head on top.",
     SHOWUI_START_DOCSTRING,
 )
-class ShowUIPreTrainedModel(PreTrainedModel):
+class Qwen2VLPreTrainedModel(PreTrainedModel):
     config_class = Qwen2VLConfig
     base_model_prefix = "model"
     supports_gradient_checkpointing = True
@@ -1110,7 +1110,7 @@ class ShowUIPreTrainedModel(PreTrainedModel):
                 module.weight.data[module.padding_idx].zero_()
 
 
-class ShowUIVisionTransformerPretrainedModel(ShowUIPreTrainedModel):
+class ShowUIVisionTransformerPretrainedModel(Qwen2VLPreTrainedModel):
     config_class = Qwen2VLVisionConfig
     _no_split_modules = ["Qwen2VLVisionBlock"]
 
@@ -1197,10 +1197,10 @@ class ShowUIVisionTransformerPretrainedModel(ShowUIPreTrainedModel):
 
 
 @add_start_docstrings(
-    "The bare Qwen2VL Model outputting raw hidden-states without any specific head on top.",
-    QWEN2VL_START_DOCSTRING,
+    "The bare ShowUI Model outputting raw hidden-states without any specific head on top.",
+    SHOWUI_START_DOCSTRING,
 )
-class ShowUIModel(ShowUIPreTrainedModel):
+class ShowUIModel(PreTrainedModel):
     def __init__(self, config: Qwen2VLConfig):
         super().__init__(config)
         self.padding_idx = config.pad_token_id
@@ -1565,7 +1565,33 @@ QWEN2_VL_INPUTS_DOCSTRING = r"""
 """
 
 
-class ShowUIForConditionalGeneration(ShowUIPreTrainedModel, GenerationMixin):
+class ShowUIPreTrainedModel(PreTrainedModel):
+    """
+    An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
+    models. This class inherits from PreTrainedModel and adds ShowUI-specific functionality.
+    """
+    config_class = Qwen2VLConfig
+    base_model_prefix = "model"
+    supports_gradient_checkpointing = True
+    _no_split_modules = ["Qwen2VLDecoderLayer", "Qwen2VLVisionBlock"]
+    _skip_keys_device_placement = "past_key_values"
+    _supports_flash_attn_2 = True
+    _supports_sdpa = True
+    _supports_cache_class = True
+    _supports_static_cache = True
+
+    def _init_weights(self, module):
+        std = self.config.initializer_range
+        if isinstance(module, (nn.Linear, nn.Conv3d)):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.bias is not None:
+                module.bias.data.zero_()
+        elif isinstance(module, nn.Embedding):
+            module.weight.data.normal_(mean=0.0, std=std)
+            if module.padding_idx is not None:
+                module.weight.data[module.padding_idx].zero_()
+
+class Qwen2VLForConditionalGeneration(ShowUIPreTrainedModel, GenerationMixin):
     _tied_weights_keys = ["lm_head.weight"]
 
     def __init__(self, config, **kwargs):
@@ -1763,7 +1789,7 @@ class ShowUIForConditionalGeneration(ShowUIPreTrainedModel, GenerationMixin):
             return position_ids, mrope_position_deltas
 
     @add_start_docstrings_to_model_forward(QWEN2_VL_INPUTS_DOCSTRING)
-    @replace_return_docstrings(output_type=ShowUICausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC)
+    @replace_return_docstrings(output_type=Qwen2VLCausalLMOutputWithPast, config_class=_CONFIG_FOR_DOC)
     def forward(
         self,
         input_ids: torch.LongTensor = None,
@@ -1786,7 +1812,7 @@ class ShowUIForConditionalGeneration(ShowUIPreTrainedModel, GenerationMixin):
         patch_assign_len: Optional[torch.LongTensor] = None,
         patch_assign_sep: Optional[torch.LongTensor] = None,
         patch_pos: Optional[torch.LongTensor] = None,
-    ) -> Union[Tuple, ShowUICausalLMOutputWithPast]:
+    ) -> Union[Tuple, Qwen2VLCausalLMOutputWithPast]:
         r"""
         Args:
             labels (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
@@ -1929,7 +1955,7 @@ class ShowUIForConditionalGeneration(ShowUIPreTrainedModel, GenerationMixin):
             output = (logits,) + outputs[1:]
             return (loss,) + output if loss is not None else output
 
-        return ShowUICausalLMOutputWithPast(
+        return Qwen2VLCausalLMOutputWithPast(
             loss=loss,
             logits=logits,
             past_key_values=outputs.past_key_values,

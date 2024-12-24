@@ -18,7 +18,7 @@ from transformers.utils import OptionalDependencyNotAvailable, _LazyModule, is_t
 
 _import_structure = {
     "configuration_showui": ["Qwen2VLConfig"],
-    "processing_showui": ["ShowUIProcessor"],
+    "processing_showui": ["Qwen2VLProcessor"],
 }
 
 
@@ -29,7 +29,7 @@ except OptionalDependencyNotAvailable:
     pass
 else:
     _import_structure["modeling_showui"] = [
-        "ShowUIForConditionalGeneration",
+        "Qwen2VLForConditionalGeneration",
         "ShowUIModel",
         "ShowUIPreTrainedModel",
     ]
@@ -45,7 +45,7 @@ else:
 
 if TYPE_CHECKING:
     from .configuration_showui import Qwen2VLConfig
-    from .processing_showui import ShowUIProcessor
+    from .processing_showui import Qwen2VLProcessor
 
     try:
         if not is_torch_available():
@@ -54,9 +54,9 @@ if TYPE_CHECKING:
         pass
     else:
         from .modeling_showui import (
-            ShowUIForConditionalGeneration,
+            Qwen2VLForConditionalGeneration,
             ShowUIModel,
-            Qwen2VLPreTrainedModel,
+            ShowUIPreTrainedModel,
         )
 
     try:

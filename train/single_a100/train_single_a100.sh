@@ -1,13 +1,14 @@
 #!/bin/bash
 
-export WANDB_API_KEY=<your_wandb_api_key_here>
+# Add project root to PYTHONPATH
+export PYTHONPATH="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd):${PYTHONPATH}"
 
-deepspeed --include localhost:0 --master_port 4221 train.py \
-  --wandb_key $WANDB_API_KEY \
+deepspeed --include localhost:0 --master_port 4221 train/train.py \
+  --wandb_key="$WANDB_API_KEY" \
   --model_id="Qwen/Qwen2-VL-2B-Instruct" \
   --version="Qwen/Qwen2-VL-2B-Instruct" \
-  --dataset_dir="./data" \
-  --log_base_dir="./logs" \
+  --dataset_dir="data" \
+  --log_base_dir="logs" \
   --epochs=1 \
   --steps_per_epoch=100 \
   --batch_size=2 \

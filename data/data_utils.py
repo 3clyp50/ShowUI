@@ -9,6 +9,8 @@ IGNORE_INDEX = -100
 DEFAULT_IMAGE_TOKEN_LLAVA = "<image>"
 DEFAULT_IMAGE_TOKEN_PHI3V = "<|image_1|>"
 DEFAULT_IMAGE_TOKEN = DEFAULT_IMAGE_TOKEN_PHI3V
+DEFAULT_IM_START_TOKEN = "<im_start>"
+DEFAULT_IM_END_TOKEN = "<im_end>"
 
 SHORT_QUESTION_LIST = [
     DEFAULT_IMAGE_TOKEN + "\n" + "Can you segment the {class_name} in this image?",
@@ -193,4 +195,3 @@ def dict_to_cuda(input_dict, device="cuda"):
             # input_dict[k] = [ele.cuda(non_blocking=True) for ele in v]
             input_dict[k] = [ele.to(device, non_blocking=True) for ele in v]
     return input_dict
-

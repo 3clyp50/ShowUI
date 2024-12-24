@@ -42,7 +42,7 @@ class Qwen2VLProcessorKwargs(ProcessingKwargs, total=False):
     }
 
 
-class ShowUIProcessor(ProcessorMixin):
+class Qwen2VLProcessor(ProcessorMixin):
     r"""
     Constructs a ShowUI processor which wraps a ShowUI image processor and a Qwen2 tokenizer into a single processor.
     [`Qwen2VLProcessor`] offers all the functionalities of [`ShowUIImageProcessor`] and [`Qwen2TokenizerFast`]. See the

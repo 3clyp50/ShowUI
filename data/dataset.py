@@ -5,24 +5,10 @@ import pdb
 import sys
 sys.path.append(".")
 from data.data_utils import IGNORE_INDEX
-from data.dset_miniwob import MiniWobDataset
-from data.dset_aitw import AitwDataset
-from data.dset_aitz import AitzDataset
-from data.dset_omniact import OmniActDataset
-from data.dset_seeclick import SeeClickDataset
-from data.dset_mind2web import Mind2WebDataset
-from data.dset_screenspot import ScreenSpotDataset
-from data.dset_odyssey import OdysseyDataset
-from data.dset_guiworld import GUIWorldDataset
-from data.dset_act2cap import Act2CapDataset
-
-from data.dset_shared_grounding import GroundingDataset
-from data.dset_shared_onestep import OneStepDataset
-from data.dset_shared_captioning import CaptioningDataset
-from data.dset_shared_navigation import NavigationDataset
-from data.dset_shared_chat import ChatDataset
-from data.dset_shared_llava import LLaVADataset
-from data.dset_xlam import XLAMDataset
+# Import only the datasets we need
+from data.dset_omniact import OmniActDataset  # For omniact dataset
+from data.dset_screenspot import ScreenSpotDataset  # For validation
+from data.dset_shared_grounding import GroundingDataset  # For grounding tasks
 
 from transformers import AutoProcessor
 
@@ -587,29 +573,9 @@ class HybridDataset(torch.utils.data.Dataset):
                     )
                 )
             elif dataset == "guiact":
-                guiact_data_tmp = gui_act_list[dataset_queue.count(dataset) - 1]
-                self.all_datasets.append(
-                    NavigationDataset(
-                        dataset,
-                        base_image_dir,
-                        processor,
-                        samples_per_epoch,
-                        precision,
-                        guiact_data_tmp,
-                        num_turn=self.num_turn,
-                        num_history=self.num_history,
-                        interleaved_history=self.interleaved_history,
-                        decay_factor=self.decay_factor,
-                        inference=self.inference,
-                        random_sample=False,
-                        merge_patch=self.merge_patch,
-                        merge_threshold=self.merge_threshold,
-                        merge_inference=self.merge_inference,
-                        merge_random=self.merge_random,
-                        skip_readme_train=self.skip_readme_train,
-                        skip_readme_test=self.skip_readme_test,
-                    )
-                )
+                # Skip guiact dataset as it requires navigation functionality
+                print(f"Skipping guiact dataset as navigation functionality is not available")
+                continue
             elif dataset == "guichat":
                 self.all_datasets.append(
                     ChatDataset(

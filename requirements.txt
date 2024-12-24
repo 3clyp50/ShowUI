@@ -10,3 +10,6 @@ wandb
 peft
 tensorboard
 tqdm
+opencv-python
+ipython
+pillow

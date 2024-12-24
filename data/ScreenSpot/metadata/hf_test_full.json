@@ -1,0 +1,15 @@
+[
+    {
+        "img_url": "example_test.png",
+        "img_size": [1920, 1080],
+        "element": [
+            {
+                "instruction": "Test Button",
+                "bbox": [0.1, 0.2, 0.3, 0.4],
+                "data_type": "text",
+                "point": [0.2, 0.3]
+            }
+        ],
+        "element_size": 1
+    }
+]

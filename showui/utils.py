@@ -1,5 +1,32 @@
 import pdb
 import torch
+from typing import List
+
+def find_target_linear_names(model, lora_namespan_exclude: List[str] = []) -> List[str]:
+    """Find all linear layer names in the model that are not in excluded spans.
+    
+    Args:
+        model: The model to search
+        lora_namespan_exclude: List of name spans to exclude from LoRA targeting
+        
+    Returns:
+        List of linear layer names that should be targeted by LoRA
+    """
+    target_modules = []
+    
+    # Helper to check if name contains any excluded spans
+    def is_excluded(name):
+        return any(exclude in name for exclude in lora_namespan_exclude)
+    
+    # Recursively find all linear layers
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.Linear) and not is_excluded(name):
+            # Get the final component of the name (e.g. 'q_proj' from 'layers.0.self_attn.q_proj')
+            target_name = name.split('.')[-1]
+            if target_name not in target_modules:
+                target_modules.append(target_name)
+                
+    return target_modules
 
 def get_select_mask(tensor, skip_ratio=0, rand=False):
     # Use tensor operations for efficiency

@@ -21,15 +21,9 @@ from torch.utils.tensorboard import SummaryWriter
 from transformers import AutoProcessor, BitsAndBytesConfig      # do not remove this line
 from main.trainer import train
 from main.evaluator import validate as validate_default
-from main.eval_mind2web import validate_mind2web
-from main.eval_omniact_nav import validate_omniact_nav
-from main.eval_aitw import validate_aitw
-from main.eval_aitz import validate_aitz
 from main.eval_screenspot import validate_screenspot
-from main.eval_odyssey import validate_odyssey
-from main.eval_guiworld import validate_guiworld
 
-from model.utils import find_target_linear_names
+from showui.utils import find_target_linear_names
 from data.dataset import HybridDataset, collate_fn
 from data.data_utils import AverageMeter, ProgressMeter, Summary, dict_to_cuda
 from utils.utils import save_args_to_json, create_log_dir
@@ -288,8 +282,8 @@ def main(args):
 
     # Create processor
     if args.model_id in ["Qwen/Qwen2-VL-2B-Instruct", "Qwen/Qwen2-VL-7B-Instruct", "Qwen/Qwen2-VL-7B"]:
-        from model.qwen2_vl.processing_qwen2_vl import Qwen2VLProcessor
-        from model.qwen2_vl.modeling_qwen2_vl import Qwen2VLForConditionalGeneration
+        from showui.processing_showui import Qwen2VLProcessor
+        from showui.modeling_showui import Qwen2VLForConditionalGeneration
         model_id = args.model_id.replace("Qwen/", "")
         if args.local_weight:
             model_url = f"{args.local_weight_dir}/{model_id}"
@@ -324,7 +318,7 @@ def main(args):
 
     if args.model_id in ["Qwen/Qwen2-VL-2B-Instruct", "Qwen/Qwen2-VL-7B-Instruct", "Qwen/Qwen2-VL-7B"]:
         # from transformers import Qwen2VLForConditionalGeneration
-        from model.qwen2_vl.modeling_qwen2_vl import Qwen2VLForConditionalGeneration
+        from showui.modeling_showui import Qwen2VLForConditionalGeneration
         qwen_layer_lm = 28
         qwen_layer_vis = 32
         def parse_layer_type(str_ranges, L, default=0):

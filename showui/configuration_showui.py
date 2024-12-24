@@ -56,7 +56,7 @@ class Qwen2VLVisionConfig(PretrainedConfig):
 
 class Qwen2VLConfig(PretrainedConfig):
     r"""
-    This is the configuration class to store the configuration of a [`Qwen2VLModel`]. It is used to instantiate a
+    This is the configuration class to store the configuration of a [`ShowUIModel`]. It is used to instantiate a
     Qwen2-VL model according to the specified arguments, defining the model architecture. Instantiating a configuration
     with the defaults will yield a similar configuration to that of
     Qwen2-VL-7B-Instruct [Qwen/Qwen2-VL-7B-Instruct](https://huggingface.co/Qwen/Qwen2-VL-7B-Instruct).
@@ -68,7 +68,7 @@ class Qwen2VLConfig(PretrainedConfig):
     Args:
         vocab_size (`int`, *optional*, defaults to 152064):
             Vocabulary size of the Qwen2VL model. Defines the number of different tokens that can be represented by the
-            `inputs_ids` passed when calling [`Qwen2VLModel`]
+            `inputs_ids` passed when calling [`ShowUIModel`]
         hidden_size (`int`, *optional*, defaults to 8192):
             Dimension of the hidden representations.
         intermediate_size (`int`, *optional*, defaults to 29568):
